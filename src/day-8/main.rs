@@ -52,7 +52,7 @@ fn is_treehouse_visible(row: i64, col: i64, grid: &mut Grid<i64>, value: i64) ->
     let is_visible_left = left_row_values.iter().all(|&x| x < value);
     let is_visible_up = up_col_values.iter().all(|&x| x < value);
     let is_visible_down = down_col_values.iter().all(|&x| x < value);
-    return is_visible_right || is_visible_left | is_visible_up | is_visible_down;
+    return is_visible_right || is_visible_left || is_visible_up || is_visible_down;
 }
 
 fn iterate_columns(row: i64, col: i64, grid: &mut Grid<i64>) -> (Vec<i64>, Vec<i64>) {
