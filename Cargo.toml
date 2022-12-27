@@ -30,6 +30,10 @@ path = "src/day-7/main.rs"
 name = "day-8"
 path = "src/day-8/main.rs"
 
+[[bin]]
+name = "day-9"
+path = "src/day-9/main.rs"
+
 [package]
 name = "advent-of-code-2022"
 version = "0.1.0"
@@ -40,3 +44,5 @@ edition = "2021"
 [dependencies]
 indextree = { version = "4.5.0", optional = false }
 grid = { version = "0.9.0", optional = false }
+nom = { version = "7.1.1", optional = false }
+linked_hash_set = { version = "0.1.4", optional = false }
