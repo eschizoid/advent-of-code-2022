@@ -38,6 +38,14 @@ path = "src/day-9/main.rs"
 name = "day-10"
 path = "src/day-10/main.rs"
 
+[[bin]]
+name = "day-11"
+path = "src/day-11/main.rs"
+
+[[bin]]
+name = "day-12"
+path = "src/day-12/main.rs"
+
 [package]
 name = "advent-of-code-2022"
 version = "0.1.0"
@@ -50,3 +58,6 @@ indextree = { version = "4.5.0", optional = false }
 grid = { version = "0.9.0", optional = false }
 nom = { version = "7.1.1", optional = false }
 linked_hash_set = { version = "0.1.4", optional = false }
+either = { version = "1.8.0", optional = false }
+divrem = { version = "1.0.0", optional = false }
+itertools = { version = "0.10.5", optional = false }
