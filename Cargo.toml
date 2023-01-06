@@ -61,3 +61,4 @@ linked_hash_set = { version = "0.1.4", optional = false }
 either = { version = "1.8.0", optional = false }
 divrem = { version = "1.0.0", optional = false }
 itertools = { version = "0.10.5", optional = false }
+pathfinding = { version = "4.2.0", optional = false }
