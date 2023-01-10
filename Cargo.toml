@@ -46,6 +46,10 @@ path = "src/day-11/main.rs"
 name = "day-12"
 path = "src/day-12/main.rs"
 
+[[bin]]
+name = "day-13"
+path = "src/day-13/main.rs"
+
 [package]
 name = "advent-of-code-2022"
 version = "0.1.0"
@@ -62,3 +66,5 @@ either = { version = "1.8.0", optional = false }
 divrem = { version = "1.0.0", optional = false }
 itertools = { version = "0.10.5", optional = false }
 pathfinding = { version = "4.2.0", optional = false }
+serde_json = { version = "1.0.91", optional = false }
+json = "0.12.4"
