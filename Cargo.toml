@@ -67,4 +67,3 @@ divrem = { version = "1.0.0", optional = false }
 itertools = { version = "0.10.5", optional = false }
 pathfinding = { version = "4.2.0", optional = false }
 serde_json = { version = "1.0.91", optional = false }
-json = "0.12.4"

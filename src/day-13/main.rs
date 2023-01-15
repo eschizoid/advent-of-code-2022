@@ -1,11 +1,11 @@
 use itertools::EitherOrBoth::{Both, Left, Right};
-use itertools::{EitherOrBoth, Itertools};
+use itertools::Itertools;
 use serde_json::Value;
 
 #[derive(Debug)]
 struct Pair {
-  left: Vec<Value>,
-  right: Vec<Value>,
+  pub left: Vec<Value>,
+  pub right: Vec<Value>,
 }
 
 fn main() {
@@ -45,32 +45,31 @@ fn parse_json(index_pair: (i32, &Pair), sum_pair_index: &mut Vec<i32>) {
 
   'pairs: while {
     let mut item_iterator = pair_iterator.clone();
+    let mut pair = pair_iterator.next();
     'items: while {
-      println!("Pair iterator: {:?}", pair_iterator);
-      println!("Item iterator: {:?}", item_iterator);
-      let pair = pair_iterator.next();
       match pair {
         Some(Both(left, right)) => match left.is_array() && right.is_array() {
           true => {
-            println!("Processing left: {:?}", left);
-            println!("Processing right: {:?}", right);
             left_array = left.as_array().unwrap().iter();
             right_array = right.as_array().unwrap().iter();
             item_iterator = left_array.zip_longest(right_array).clone().peekable();
+            pair = item_iterator.next();
             continue 'items;
           }
           false => match left.is_array() && right.is_i64() {
             true => {
-              println!("Processing left: {:?}", left);
-              println!("Processing right: {:?}", right);
               let first_element_left = left.as_array().unwrap().first();
-              println!("Processing first element left: {:?}", first_element_left);
               match first_element_left {
                 Some(Value::Number(n)) => {
-                  if n.as_i64().unwrap() < right.as_i64().unwrap() {
-                    sum_pair_index.push(index_pair.0 + 1);
+                  if n.as_i64().unwrap() == right.as_i64().unwrap() {
+                    pair = item_iterator.next();
+                    continue 'items;
+                  } else {
+                    if n.as_i64().unwrap() < right.as_i64().unwrap() {
+                      sum_pair_index.push(index_pair.0 + 1);
+                    }
+                    break 'pairs;
                   }
-                  break 'pairs;
                 }
                 Some(Value::Array(a)) => {
                   let left_array = a.to_vec();
@@ -79,49 +78,83 @@ fn parse_json(index_pair: (i32, &Pair), sum_pair_index: &mut Vec<i32>) {
                       .iter()
                       .collect::<Vec<&Value>>()
                       .iter()
-                      .map(|x| x.as_i64().unwrap_or(-1 as i64))
+                      .map(|x| x.as_i64().unwrap())
                       .collect::<Vec<i64>>();
-                    if *elements.last().unwrap() < right.as_i64().unwrap() {
-                      sum_pair_index.push(index_pair.0 + 1);
+                    if *elements.first().unwrap() == right.as_i64().unwrap() {
+                      pair = item_iterator.next();
+                      continue 'items;
+                    } else {
+                      if *elements.first().unwrap() < right.as_i64().unwrap() {
+                        sum_pair_index.push(index_pair.0 + 1);
+                      }
+                      continue 'pairs;
                     }
+                  } else {
+                    sum_pair_index.push(index_pair.0 + 1);
                     break 'pairs;
                   }
                 }
                 _ => {
+                  sum_pair_index.push(index_pair.0 + 1);
                   break 'pairs;
                 }
               }
             }
             false => match left.is_i64() && right.is_array() {
               true => {
-                println!("Processing left: {:?}", left);
-                println!("Processing right: {:?}", right);
-                let first_element_right = right.as_array().unwrap().first();
-                println!("Processing first element right: {:?}", first_element_right);
+                let elements_right = right.as_array().unwrap();
+                let first_element_right = elements_right.first();
                 match first_element_right {
                   Some(Value::Number(n)) => {
-                    if left.as_i64().unwrap() < n.as_i64().unwrap() {
-                      sum_pair_index.push(index_pair.0 + 1);
+                    if left.as_i64().unwrap() == n.as_i64().unwrap() {
+                      pair = item_iterator.next();
+                      continue 'items;
+                    } else {
+                      if left.as_i64().unwrap() < n.as_i64().unwrap() {
+                        sum_pair_index.push(index_pair.0 + 1);
+                      }
+                      break 'pairs;
                     }
-                    break 'pairs;
                   }
                   Some(Value::Array(a)) => {
+                    let initial: Vec<i64> = Vec::new();
+                    let mut flatten_elements =
+                      elements_right.into_iter().fold(initial, |mut acc, val| {
+                        match val {
+                          Value::Number(num) => {
+                            acc.push(num.as_i64().unwrap());
+                          }
+                          Value::Array(arr) => {
+                            acc.extend(arr.iter().map(|x| x.as_i64().unwrap()).collect_vec());
+                          }
+                          _ => panic!("invalid input"),
+                        }
+                        acc
+                      });
                     let right_array = a.to_vec();
                     if !right_array.is_empty() {
                       let elements = right_array
                         .iter()
                         .collect::<Vec<&Value>>()
                         .iter()
-                        .map(|x| x.as_i64().unwrap_or(-1 as i64))
+                        .map(|x| x.as_i64().unwrap())
                         .collect::<Vec<i64>>();
-                      if left.as_i64().unwrap() == *elements.last().unwrap() {
-                        break 'items;
+                      if left.as_i64().unwrap() == *elements.first().unwrap() {
+                        flatten_elements.sort();
+                        if *flatten_elements.last().unwrap() > left.as_i64().unwrap() {
+                          sum_pair_index.push(index_pair.0 + 1);
+                          break 'pairs;
+                        }
+                        pair = item_iterator.next();
+                        continue 'items;
                       } else {
-                        if left.as_i64().unwrap() < *elements.last().unwrap() {
+                        if left.as_i64().unwrap() < *elements.first().unwrap() {
                           sum_pair_index.push(index_pair.0 + 1);
                         }
                         break 'pairs;
                       }
+                    } else {
+                      break 'pairs;
                     }
                   }
                   _ => {
@@ -131,11 +164,9 @@ fn parse_json(index_pair: (i32, &Pair), sum_pair_index: &mut Vec<i32>) {
               }
               false => match left.is_i64() && right.is_i64() {
                 true => {
-                  println!("Processing left: {:?}", left);
-                  println!("Processing right: {:?}", right);
                   if left.as_i64().unwrap() == right.as_i64().unwrap() {
-                    println!("Left and right are equal");
-                    break 'items;
+                    pair = item_iterator.next();
+                    continue 'items;
                   } else {
                     if left.as_i64().unwrap() < right.as_i64().unwrap() {
                       sum_pair_index.push(index_pair.0 + 1);
@@ -144,31 +175,20 @@ fn parse_json(index_pair: (i32, &Pair), sum_pair_index: &mut Vec<i32>) {
                   }
                 }
                 false => {
-                  panic!("Invalid input");
+                  panic!("invalid input");
                 }
               },
             },
           },
         },
-        Some(Left(left)) => {
-          println!("Processing left: {:?}", left);
-          println!(
-            "Doing nothing left value {} higher than blank right value",
-            left
-          );
+        Some(Left(_)) => {
           break 'pairs;
         }
-        Some(Right(right)) => {
-          println!(
-            "Incrementing since right value {} higher than blank left value",
-            right
-          );
+        Some(Right(_)) => {
           sum_pair_index.push(index_pair.0 + 1);
           break 'pairs;
         }
-        None => {
-          break 'pairs;
-        }
+        _ => {}
       }
       item_iterator.peek().is_some()
     } {}
