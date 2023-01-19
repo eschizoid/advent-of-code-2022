@@ -50,6 +50,10 @@ path = "src/day-12/main.rs"
 name = "day-13"
 path = "src/day-13/main.rs"
 
+[[bin]]
+name = "day-14"
+path = "src/day-14/main.rs"
+
 [package]
 name = "advent-of-code-2022"
 version = "0.1.0"

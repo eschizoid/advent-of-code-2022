@@ -117,20 +117,6 @@ fn parse_json(index_pair: (i32, &Pair), sum_pair_index: &mut Vec<i32>) {
                     }
                   }
                   Some(Value::Array(a)) => {
-                    let initial: Vec<i64> = Vec::new();
-                    let mut flatten_elements =
-                      elements_right.into_iter().fold(initial, |mut acc, val| {
-                        match val {
-                          Value::Number(num) => {
-                            acc.push(num.as_i64().unwrap());
-                          }
-                          Value::Array(arr) => {
-                            acc.extend(arr.iter().map(|x| x.as_i64().unwrap()).collect_vec());
-                          }
-                          _ => panic!("invalid input"),
-                        }
-                        acc
-                      });
                     let right_array = a.to_vec();
                     if !right_array.is_empty() {
                       let elements = right_array
@@ -140,6 +126,20 @@ fn parse_json(index_pair: (i32, &Pair), sum_pair_index: &mut Vec<i32>) {
                         .map(|x| x.as_i64().unwrap())
                         .collect::<Vec<i64>>();
                       if left.as_i64().unwrap() == *elements.first().unwrap() {
+                        let initial: Vec<i64> = Vec::new();
+                        let mut flatten_elements =
+                          elements_right.into_iter().fold(initial, |mut acc, val| {
+                            match val {
+                              Value::Number(num) => {
+                                acc.push(num.as_i64().unwrap());
+                              }
+                              Value::Array(arr) => {
+                                acc.extend(arr.iter().map(|x| x.as_i64().unwrap()).collect_vec());
+                              }
+                              _ => panic!("invalid input"),
+                            }
+                            acc
+                          });
                         flatten_elements.sort();
                         if *flatten_elements.last().unwrap() > left.as_i64().unwrap() {
                           sum_pair_index.push(index_pair.0 + 1);
