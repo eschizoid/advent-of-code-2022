@@ -100,10 +100,7 @@ fn drop_sand_to_matrix(mut matrix_with_rocks: Matrix<Element>) {
         };
       }
       Element::Rock | Element::Sand
-        if ((left_element == Element::Rock && right_element == Element::Rock)
-          || (left_element == Element::Sand && right_element == Element::Sand)
-          || (left_element == Element::Rock && right_element == Element::Sand)
-          || (left_element == Element::Sand && right_element == Element::Rock)) =>
+        if (left_element != Element::Air && right_element != Element::Air) =>
       {
         *matrix_with_rocks
           .get_mut(current_position.as_tuple())
