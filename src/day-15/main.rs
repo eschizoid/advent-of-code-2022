@@ -49,20 +49,24 @@ fn main() {
   sensor_position.dedup();
 
   let pair_ranges = get_ranges(pairs, INTERESTED_Y);
-  let mut ranges = Vec::new();
-  pair_ranges
-    .values()
-    .filter(|r| r.len() > 0)
-    .for_each(|r| ranges.extend(r.clone()));
-
-  let binding = ranges.iter().map(|r| r.clone().collect_vec()).collect_vec();
-  let mut merged_ranges = binding.iter().flatten().collect_vec();
-  merged_ranges.sort();
-  merged_ranges.dedup();
+  let mut ranges = Vec::from_iter(
+    pair_ranges
+      .values()
+      .filter(|r| r.len() > 0)
+      .map(|r| r.clone())
+      .collect_vec()
+      .into_iter()
+      .flatten()
+      .collect_vec()
+      .into_iter()
+      .flatten(),
+  );
+  ranges.sort();
+  ranges.dedup();
 
   println!(
     "Total positions: {:?}",
-    merged_ranges.len() - sensor_position.len()
+    ranges.len() - sensor_position.len()
   );
 }
 
