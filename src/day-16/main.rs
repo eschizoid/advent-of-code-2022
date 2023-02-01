@@ -18,11 +18,10 @@ struct Valve {
 }
 
 fn main() {
-  let mut valves = all_consuming(parse_all_valves)(include_str!("input.txt"))
+  let valves = all_consuming(parse_all_valves)(include_str!("input.txt"))
     .finish()
     .unwrap()
     .1;
-  valves.sort_by_key(|valve| valve.name.clone());
 
   let mut graph: Graph<(), (), Directed> = Graph::new();
   let node_names = HashMap::from_iter(valves.iter().map(|valve| (&valve.name, graph.add_node(()))));
