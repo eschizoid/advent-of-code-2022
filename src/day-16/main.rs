@@ -72,17 +72,17 @@ fn get_weight_map(
 ) -> HashMap<(NodeIndex, NodeIndex), i32> {
   let mut valves_graph_weight: HashMap<(NodeIndex, NodeIndex), i32> = HashMap::new();
   valves.iter().for_each(|valve| {
-    println!(
-      "Adding path ({}, {}) with weight {}",
-      valve.name, valve.name, 0
-    );
-    valves_graph_weight.insert(
-      (
-        *nodes.get(&valve.name).unwrap(),
-        *nodes.get(&valve.name).unwrap(),
-      ),
-      0,
-    );
+    // println!(
+    //   "Adding path ({}, {}) with weight {}",
+    //   valve.name, valve.name, 0
+    // );
+    // valves_graph_weight.insert(
+    //   (
+    //     *nodes.get(&valve.name).unwrap(),
+    //     *nodes.get(&valve.name).unwrap(),
+    //   ),
+    //   0,
+    // );
     valve.tunnel_valves.iter().for_each(|tunnel_valve_name| {
       println!(
         "Adding path ({}, {}) with weight {}",
