@@ -1,6 +1,5 @@
 use std::collections::HashMap;
 
-use itertools::Itertools;
 use nom::branch::alt;
 use nom::bytes::complete::take_while;
 use nom::character::complete as cc;
@@ -19,23 +18,21 @@ struct Valve {
 }
 
 fn main() {
-  let valves = all_consuming(parse_all_valves)(include_str!("input.txt"))
+  let mut valves = all_consuming(parse_all_valves)(include_str!("input.txt"))
     .finish()
     .unwrap()
     .1;
+  valves.sort_by_key(|valve| valve.name.clone());
 
-  let mut graph: Graph<(), (), Directed> = Graph::new();
   let mut valves_graph: Vec<(NodeIndex, NodeIndex)> = Vec::new();
-
-  let node_names: HashMap<&String, NodeIndex> =
-    HashMap::from_iter(valves.iter().map(|valve| (&valve.name, graph.add_node(()))));
-
+  let mut graph: Graph<(), (), Directed> = Graph::new();
   let node_indexes: HashMap<usize, String> = HashMap::from_iter(
     valves
       .iter()
       .enumerate()
       .map(|valve| (valve.0, valve.1.name.clone())),
   );
+  let node_names = HashMap::from_iter(valves.iter().map(|valve| (&valve.name, graph.add_node(()))));
 
   valves.iter().for_each(|valve| {
     valve.tunnel_valves.iter().for_each(|tunnel_valve_name| {
@@ -47,21 +44,22 @@ fn main() {
   });
   graph.extend_with_edges(&valves_graph);
 
-  let weight_map = build_graph_and_weight_map(&valves, &node_names);
+  let weight_map = get_weight_map(&valves, &node_names);
   let res = floyd_warshall(&graph, |edge| {
     if let Some(weight) = weight_map.get(&(edge.source(), edge.target())) {
       *weight
     } else {
-      panic!("No weight found for edge {:?}", edge);
+      unreachable!()
     }
   })
   .unwrap();
 
+  println!("Total paths found: {:?}", res.len());
   res.iter().for_each(|node| {
     let node_index_pair = node.0;
     let weight = node.1;
     println!(
-      "Nodes found {:?}: {:?} with weight {}",
+      "Paths found {:?} {:?} with weight {}",
       node_indexes.get(&node_index_pair.0.index()).unwrap(),
       node_indexes.get(&node_index_pair.1.index()).unwrap(),
       weight
@@ -69,7 +67,7 @@ fn main() {
   });
 }
 
-fn build_graph_and_weight_map(
+fn get_weight_map(
   valves: &Vec<Valve>,
   nodes: &HashMap<&String, NodeIndex>,
 ) -> HashMap<(NodeIndex, NodeIndex), i32> {
@@ -100,8 +98,9 @@ fn parse_all_valves(i: &str) -> IResult<&str, Vec<Valve>> {
 }
 
 fn parse_valve(input: &str) -> IResult<&str, Valve> {
+  // Sample input:
   // Valve QJ has flow rate=11; tunnels lead to valves HB, GL
-  let (input, result) = separated_pair(
+  let (input, mut result) = separated_pair(
     tuple((
       tag("Valve "),
       map_res(take_while(|c: char| c.is_alphabetic()), |s: &str| {
@@ -125,6 +124,9 @@ fn parse_valve(input: &str) -> IResult<&str, Valve> {
       ),
     )),
   )(input)?;
+
+  #[rustfmt::skip]
+  result.1.3.sort();
 
   Ok((
     input,
