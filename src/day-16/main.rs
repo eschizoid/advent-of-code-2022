@@ -9,7 +9,7 @@ use nom::sequence::{separated_pair, tuple};
 use nom::{bytes::complete::tag, Finish, IResult};
 use petgraph::algo::floyd_warshall;
 use petgraph::visit::{Bfs, NodeIndexable};
-use petgraph::{prelude::*, Directed, Graph};
+use petgraph::{prelude::*, Graph, Undirected};
 
 #[derive(Debug, Clone)]
 struct Valve {
@@ -24,7 +24,7 @@ fn main() {
     .unwrap()
     .1;
 
-  let mut graph: Graph<(), ()> = Graph::new();
+  let mut graph: Graph<(), (), Undirected> = Graph::new_undirected();
   let node_names = HashMap::from_iter(valves.iter().map(|valve| (&valve.name, graph.add_node(()))));
   let node_indexes: HashMap<usize, String> = HashMap::from_iter(
     valves
@@ -72,14 +72,22 @@ fn get_weight_map(
 ) -> HashMap<(NodeIndex, NodeIndex), i32> {
   let mut valves_graph_weight: HashMap<(NodeIndex, NodeIndex), i32> = HashMap::new();
   valves.iter().for_each(|valve| {
-    // valves_graph_weight.insert(
-    //   (
-    //     *nodes.get(&valve.name).unwrap(),
-    //     *nodes.get(&valve.name).unwrap(),
-    //   ),
-    //   0,
-    // );
+    println!(
+      "Adding path ({}, {}) with weight {}",
+      valve.name, valve.name, 0
+    );
+    valves_graph_weight.insert(
+      (
+        *nodes.get(&valve.name).unwrap(),
+        *nodes.get(&valve.name).unwrap(),
+      ),
+      0,
+    );
     valve.tunnel_valves.iter().for_each(|tunnel_valve_name| {
+      println!(
+        "Adding path ({}, {}) with weight {}",
+        valve.name, tunnel_valve_name, valve.flow_rate
+      );
       valves_graph_weight.insert(
         (
           *nodes.get(&valve.name).unwrap(),
@@ -94,9 +102,9 @@ fn get_weight_map(
 
 fn get_graph(
   valves: Vec<Valve>,
-  mut graph: Graph<(), ()>,
+  mut graph: Graph<(), (), Undirected>,
   node_names: HashMap<&String, NodeIndex>,
-) -> Graph<(), ()> {
+) -> Graph<(), (), Undirected> {
   let mut valves_graph: Vec<(NodeIndex, NodeIndex)> = Vec::new();
   valves.iter().for_each(|valve| {
     valve.tunnel_valves.iter().for_each(|tunnel_valve_name| {
@@ -117,7 +125,7 @@ fn parse_all_valves(i: &str) -> IResult<&str, Vec<Valve>> {
 fn parse_valve(input: &str) -> IResult<&str, Valve> {
   // Sample input:
   // Valve QJ has flow rate=11; tunnels lead to valves HB, GL
-  let (input, mut result) = separated_pair(
+  let (input, result) = separated_pair(
     tuple((
       tag("Valve "),
       map_res(take_while(|c: char| c.is_alphabetic()), |s: &str| {
@@ -141,9 +149,6 @@ fn parse_valve(input: &str) -> IResult<&str, Valve> {
       ),
     )),
   )(input)?;
-
-  #[rustfmt::skip]
-  result.1.3.sort();
 
   Ok((
     input,
