@@ -1,6 +1,6 @@
-use itertools::Itertools;
 use std::collections::HashMap;
 
+use itertools::Itertools;
 use nom::branch::alt;
 use nom::bytes::complete::take_while;
 use nom::character::complete as cc;
@@ -24,45 +24,56 @@ fn main() {
     .unwrap()
     .1;
 
-  let graph = build_graph_and_weight_map(&valves).0;
-  let weight_map = build_graph_and_weight_map(&valves).1;
-  let inf = i32::MAX;
-
-  let res = floyd_warshall(&graph, |edge| {
-    if let Some(weight) = weight_map.get(&(edge.source(), edge.target())) {
-      *weight
-    } else {
-      inf
-    }
-  })
-  .unwrap();
-
-  println!(
-    "The maximum flow rate is {:#?}",
-    res.iter().clone().collect_vec()
-  );
-}
-
-fn build_graph_and_weight_map(
-  valves: &Vec<Valve>,
-) -> (Graph<(), ()>, HashMap<(NodeIndex, NodeIndex), i32>) {
   let mut graph: Graph<(), (), Directed> = Graph::new();
   let mut valves_graph: Vec<(NodeIndex, NodeIndex)> = Vec::new();
-  let mut valves_graph_weight: HashMap<(NodeIndex, NodeIndex), i32> = HashMap::new();
 
-  let nodes: HashMap<&String, NodeIndex> =
+  let node_names: HashMap<&String, NodeIndex> =
     HashMap::from_iter(valves.iter().map(|valve| (&valve.name, graph.add_node(()))));
+
+  let node_indexes: HashMap<usize, String> = HashMap::from_iter(
+    valves
+      .iter()
+      .enumerate()
+      .map(|valve| (valve.0, valve.1.name.clone())),
+  );
 
   valves.iter().for_each(|valve| {
     valve.tunnel_valves.iter().for_each(|tunnel_valve_name| {
       valves_graph.push((
-        *nodes.get(&valve.name).unwrap(),
-        *nodes.get(&tunnel_valve_name).unwrap(),
+        *node_names.get(&valve.name).unwrap(),
+        *node_names.get(&tunnel_valve_name).unwrap(),
       ));
     })
   });
   graph.extend_with_edges(&valves_graph);
 
+  let weight_map = build_graph_and_weight_map(&valves, &node_names);
+  let res = floyd_warshall(&graph, |edge| {
+    if let Some(weight) = weight_map.get(&(edge.source(), edge.target())) {
+      *weight
+    } else {
+      panic!("No weight found for edge {:?}", edge);
+    }
+  })
+  .unwrap();
+
+  res.iter().for_each(|node| {
+    let node_index_pair = node.0;
+    let weight = node.1;
+    println!(
+      "Nodes found {:?}: {:?} with weight {}",
+      node_indexes.get(&node_index_pair.0.index()).unwrap(),
+      node_indexes.get(&node_index_pair.1.index()).unwrap(),
+      weight
+    );
+  });
+}
+
+fn build_graph_and_weight_map(
+  valves: &Vec<Valve>,
+  nodes: &HashMap<&String, NodeIndex>,
+) -> HashMap<(NodeIndex, NodeIndex), i32> {
+  let mut valves_graph_weight: HashMap<(NodeIndex, NodeIndex), i32> = HashMap::new();
   valves.iter().for_each(|valve| {
     valves_graph_weight.insert(
       (
@@ -81,8 +92,7 @@ fn build_graph_and_weight_map(
       );
     })
   });
-  println!("{:#?}", valves_graph_weight);
-  return (graph, valves_graph_weight);
+  return valves_graph_weight;
 }
 
 fn parse_all_valves(i: &str) -> IResult<&str, Vec<Valve>> {
