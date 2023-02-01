@@ -8,7 +8,7 @@ use nom::multi::separated_list1;
 use nom::sequence::{separated_pair, tuple};
 use nom::{bytes::complete::tag, Finish, IResult};
 use petgraph::algo::floyd_warshall;
-use petgraph::visit::{Bfs, NodeIndexable};
+use petgraph::visit::{Dfs, NodeIndexable};
 use petgraph::{prelude::*, Graph, Undirected};
 
 #[derive(Debug, Clone)]
@@ -24,7 +24,7 @@ fn main() {
     .unwrap()
     .1;
 
-  let mut graph: Graph<(), (), Undirected> = Graph::new_undirected();
+  let mut graph: Graph<(), (), Directed> = Graph::new();
   let node_names = HashMap::from_iter(valves.iter().map(|valve| (&valve.name, graph.add_node(()))));
   let node_indexes: HashMap<usize, String> = HashMap::from_iter(
     valves
@@ -57,7 +57,11 @@ fn main() {
     );
   });
 
-  let mut bfs = Bfs::new(&graph, graph.from_index(0));
+  println!(
+    "Starting from: {:?}",
+    node_names.get(&"AA".to_string()).unwrap().clone()
+  );
+  let mut bfs = Bfs::new(&graph, node_names.get(&"AA".to_string()).unwrap().clone());
   while let Some(nx) = bfs.next(&graph) {
     println!(
       "Next BFS node: {:?}",
@@ -72,17 +76,17 @@ fn get_weight_map(
 ) -> HashMap<(NodeIndex, NodeIndex), i32> {
   let mut valves_graph_weight: HashMap<(NodeIndex, NodeIndex), i32> = HashMap::new();
   valves.iter().for_each(|valve| {
-    // println!(
-    //   "Adding path ({}, {}) with weight {}",
-    //   valve.name, valve.name, 0
-    // );
-    // valves_graph_weight.insert(
-    //   (
-    //     *nodes.get(&valve.name).unwrap(),
-    //     *nodes.get(&valve.name).unwrap(),
-    //   ),
-    //   0,
-    // );
+    println!(
+      "Adding path ({}, {}) with weight {}",
+      valve.name, valve.name, 0
+    );
+    valves_graph_weight.insert(
+      (
+        *nodes.get(&valve.name).unwrap(),
+        *nodes.get(&valve.name).unwrap(),
+      ),
+      0,
+    );
     valve.tunnel_valves.iter().for_each(|tunnel_valve_name| {
       println!(
         "Adding path ({}, {}) with weight {}",
@@ -102,9 +106,9 @@ fn get_weight_map(
 
 fn get_graph(
   valves: Vec<Valve>,
-  mut graph: Graph<(), (), Undirected>,
+  mut graph: Graph<(), (), Directed>,
   node_names: HashMap<&String, NodeIndex>,
-) -> Graph<(), (), Undirected> {
+) -> Graph<(), (), Directed> {
   let mut valves_graph: Vec<(NodeIndex, NodeIndex)> = Vec::new();
   valves.iter().for_each(|valve| {
     valve.tunnel_valves.iter().for_each(|tunnel_valve_name| {
