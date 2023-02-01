@@ -1,38 +1,38 @@
 [[bin]]
 name = "day-1"
-path = "src/day-1/main.rs"
+path = "src/day-01/main.rs"
 
 [[bin]]
 name = "day-2"
-path = "src/day-2/main.rs"
+path = "src/day-02/main.rs"
 
 [[bin]]
 name = "day-3"
-path = "src/day-3/main.rs"
+path = "src/day-03/main.rs"
 
 [[bin]]
 name = "day-4"
-path = "src/day-4/main.rs"
+path = "src/day-04/main.rs"
 
 [[bin]]
 name = "day-5"
-path = "src/day-5/main.rs"
+path = "src/day-05/main.rs"
 
 [[bin]]
 name = "day-6"
-path = "src/day-6/main.rs"
+path = "src/day-06/main.rs"
 
 [[bin]]
 name = "day-7"
-path = "src/day-7/main.rs"
+path = "src/day-07/main.rs"
 
 [[bin]]
 name = "day-8"
-path = "src/day-8/main.rs"
+path = "src/day-08/main.rs"
 
 [[bin]]
 name = "day-9"
-path = "src/day-9/main.rs"
+path = "src/day-09/main.rs"
 
 [[bin]]
 name = "day-10"
@@ -70,12 +70,13 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-indextree = { version = "4.5.0", optional = false }
-grid = { version = "0.9.0", optional = false }
-nom = { version = "7.1.1", optional = false }
-linked_hash_set = { version = "0.1.4", optional = false }
 either = { version = "1.8.0", optional = false }
 divrem = { version = "1.0.0", optional = false }
+grid = { version = "0.9.0", optional = false }
+indextree = { version = "4.5.0", optional = false }
 itertools = { version = "0.10.5", optional = false }
+linked_hash_set = { version = "0.1.4", optional = false }
+nom = { version = "7.1.1", optional = false }
 pathfinding = { version = "4.2.0", optional = false }
+petgraph = { version = "0.6.2", optional = false }
 serde_json = { version = "1.0.91", optional = false }

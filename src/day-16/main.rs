@@ -5,6 +5,7 @@ use nom::combinator::{all_consuming, map_res};
 use nom::multi::separated_list1;
 use nom::sequence::{separated_pair, tuple};
 use nom::{bytes::complete::tag, Finish, IResult};
+use std::collections::HashMap;
 
 #[derive(Debug)]
 struct Valve {
@@ -19,6 +20,14 @@ fn main() {
     .unwrap()
     .1;
   println!("{:?}", valves);
+}
+
+fn build_valve_map(valves: Vec<Valve>) -> HashMap<String, Vec<String>> {
+  let mut valve_map = HashMap::new();
+  for valve in valves {
+    valve_map.insert(valve.name, valve.tunnel_valves);
+  }
+  return valve_map;
 }
 
 fn parse_all_valves(i: &str) -> IResult<&str, Vec<Valve>> {

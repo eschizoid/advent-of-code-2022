@@ -20,7 +20,7 @@ struct GridPosition {
 
 fn main() {
   let working_dir = get_current_working_dir();
-  let file_path = format!("{}/src/day-9/input.txt", working_dir.unwrap().display());
+  let file_path = format!("{}/src/day-09/input.txt", working_dir.unwrap().display());
   let contents = fs::read_to_string(file_path).expect("Unable to read file");
 
   let mut grid_positions_tail: LinkedHashSet<GridPosition> = LinkedHashSet::new();
