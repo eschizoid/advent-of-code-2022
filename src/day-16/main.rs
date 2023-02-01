@@ -10,7 +10,7 @@ use nom::{bytes::complete::tag, Finish, IResult};
 use petgraph::algo::floyd_warshall;
 use petgraph::{prelude::*, Directed, Graph};
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 struct Valve {
   name: String,
   flow_rate: i32,
@@ -24,28 +24,19 @@ fn main() {
     .1;
   valves.sort_by_key(|valve| valve.name.clone());
 
-  let mut valves_graph: Vec<(NodeIndex, NodeIndex)> = Vec::new();
   let mut graph: Graph<(), (), Directed> = Graph::new();
+  let node_names = HashMap::from_iter(valves.iter().map(|valve| (&valve.name, graph.add_node(()))));
   let node_indexes: HashMap<usize, String> = HashMap::from_iter(
     valves
       .iter()
       .enumerate()
       .map(|valve| (valve.0, valve.1.name.clone())),
   );
-  let node_names = HashMap::from_iter(valves.iter().map(|valve| (&valve.name, graph.add_node(()))));
 
-  valves.iter().for_each(|valve| {
-    valve.tunnel_valves.iter().for_each(|tunnel_valve_name| {
-      valves_graph.push((
-        *node_names.get(&valve.name).unwrap(),
-        *node_names.get(&tunnel_valve_name).unwrap(),
-      ));
-    })
-  });
-  graph.extend_with_edges(&valves_graph);
+  let graph = get_graph(valves.clone(), graph, node_names.clone());
+  let weight_map = get_weight_map(valves.clone(), node_names.clone());
 
-  let weight_map = get_weight_map(&valves, &node_names);
-  let res = floyd_warshall(&graph, |edge| {
+  let distances = floyd_warshall(&graph, |edge| {
     if let Some(weight) = weight_map.get(&(edge.source(), edge.target())) {
       *weight
     } else {
@@ -54,8 +45,8 @@ fn main() {
   })
   .unwrap();
 
-  println!("Total paths found: {:?}", res.len());
-  res.iter().for_each(|node| {
+  println!("Total paths found: {:?}", distances.len());
+  distances.iter().for_each(|node| {
     let node_index_pair = node.0;
     let weight = node.1;
     println!(
@@ -68,8 +59,8 @@ fn main() {
 }
 
 fn get_weight_map(
-  valves: &Vec<Valve>,
-  nodes: &HashMap<&String, NodeIndex>,
+  valves: Vec<Valve>,
+  nodes: HashMap<&String, NodeIndex>,
 ) -> HashMap<(NodeIndex, NodeIndex), i32> {
   let mut valves_graph_weight: HashMap<(NodeIndex, NodeIndex), i32> = HashMap::new();
   valves.iter().for_each(|valve| {
@@ -91,6 +82,24 @@ fn get_weight_map(
     })
   });
   return valves_graph_weight;
+}
+
+fn get_graph(
+  valves: Vec<Valve>,
+  mut graph: Graph<(), ()>,
+  node_names: HashMap<&String, NodeIndex>,
+) -> Graph<(), ()> {
+  let mut valves_graph: Vec<(NodeIndex, NodeIndex)> = Vec::new();
+  valves.iter().for_each(|valve| {
+    valve.tunnel_valves.iter().for_each(|tunnel_valve_name| {
+      valves_graph.push((
+        *node_names.get(&valve.name).unwrap(),
+        *node_names.get(&tunnel_valve_name).unwrap(),
+      ));
+    })
+  });
+  graph.extend_with_edges(&valves_graph);
+  return graph;
 }
 
 fn parse_all_valves(i: &str) -> IResult<&str, Vec<Valve>> {
