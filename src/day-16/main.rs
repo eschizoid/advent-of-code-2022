@@ -1,3 +1,6 @@
+use itertools::Itertools;
+use std::collections::HashMap;
+
 use nom::branch::alt;
 use nom::bytes::complete::take_while;
 use nom::character::complete as cc;
@@ -5,7 +8,8 @@ use nom::combinator::{all_consuming, map_res};
 use nom::multi::separated_list1;
 use nom::sequence::{separated_pair, tuple};
 use nom::{bytes::complete::tag, Finish, IResult};
-use std::collections::HashMap;
+use petgraph::algo::floyd_warshall;
+use petgraph::{prelude::*, Directed, Graph};
 
 #[derive(Debug)]
 struct Valve {
@@ -19,15 +23,66 @@ fn main() {
     .finish()
     .unwrap()
     .1;
-  println!("{:?}", valves);
+
+  let graph = build_graph_and_weight_map(&valves).0;
+  let weight_map = build_graph_and_weight_map(&valves).1;
+  let inf = i32::MAX;
+
+  let res = floyd_warshall(&graph, |edge| {
+    if let Some(weight) = weight_map.get(&(edge.source(), edge.target())) {
+      *weight
+    } else {
+      inf
+    }
+  })
+  .unwrap();
+
+  println!(
+    "The maximum flow rate is {:#?}",
+    res.iter().clone().collect_vec()
+  );
 }
 
-fn build_valve_map(valves: Vec<Valve>) -> HashMap<String, Vec<String>> {
-  let mut valve_map = HashMap::new();
-  for valve in valves {
-    valve_map.insert(valve.name, valve.tunnel_valves);
-  }
-  return valve_map;
+fn build_graph_and_weight_map(
+  valves: &Vec<Valve>,
+) -> (Graph<(), ()>, HashMap<(NodeIndex, NodeIndex), i32>) {
+  let mut graph: Graph<(), (), Directed> = Graph::new();
+  let mut valves_graph: Vec<(NodeIndex, NodeIndex)> = Vec::new();
+  let mut valves_graph_weight: HashMap<(NodeIndex, NodeIndex), i32> = HashMap::new();
+
+  let nodes: HashMap<&String, NodeIndex> =
+    HashMap::from_iter(valves.iter().map(|valve| (&valve.name, graph.add_node(()))));
+
+  valves.iter().for_each(|valve| {
+    valve.tunnel_valves.iter().for_each(|tunnel_valve_name| {
+      valves_graph.push((
+        *nodes.get(&valve.name).unwrap(),
+        *nodes.get(&tunnel_valve_name).unwrap(),
+      ));
+    })
+  });
+  graph.extend_with_edges(&valves_graph);
+
+  valves.iter().for_each(|valve| {
+    valves_graph_weight.insert(
+      (
+        *nodes.get(&valve.name).unwrap(),
+        *nodes.get(&valve.name).unwrap(),
+      ),
+      0,
+    );
+    valve.tunnel_valves.iter().for_each(|tunnel_valve_name| {
+      valves_graph_weight.insert(
+        (
+          *nodes.get(&valve.name).unwrap(),
+          *nodes.get(&tunnel_valve_name).unwrap(),
+        ),
+        valve.flow_rate,
+      );
+    })
+  });
+  println!("{:#?}", valves_graph_weight);
+  return (graph, valves_graph_weight);
 }
 
 fn parse_all_valves(i: &str) -> IResult<&str, Vec<Valve>> {
