@@ -8,6 +8,7 @@ use nom::multi::separated_list1;
 use nom::sequence::{separated_pair, tuple};
 use nom::{bytes::complete::tag, Finish, IResult};
 use petgraph::algo::floyd_warshall;
+use petgraph::visit::{Bfs, NodeIndexable};
 use petgraph::{prelude::*, Directed, Graph};
 
 #[derive(Debug, Clone)]
@@ -23,7 +24,7 @@ fn main() {
     .unwrap()
     .1;
 
-  let mut graph: Graph<(), (), Directed> = Graph::new();
+  let mut graph: Graph<(), ()> = Graph::new();
   let node_names = HashMap::from_iter(valves.iter().map(|valve| (&valve.name, graph.add_node(()))));
   let node_indexes: HashMap<usize, String> = HashMap::from_iter(
     valves
@@ -55,6 +56,14 @@ fn main() {
       weight
     );
   });
+
+  let mut bfs = Bfs::new(&graph, graph.from_index(0));
+  while let Some(nx) = bfs.next(&graph) {
+    println!(
+      "Next BFS node: {:?}",
+      node_indexes.get(&nx.index()).unwrap()
+    );
+  }
 }
 
 fn get_weight_map(
@@ -63,13 +72,13 @@ fn get_weight_map(
 ) -> HashMap<(NodeIndex, NodeIndex), i32> {
   let mut valves_graph_weight: HashMap<(NodeIndex, NodeIndex), i32> = HashMap::new();
   valves.iter().for_each(|valve| {
-    valves_graph_weight.insert(
-      (
-        *nodes.get(&valve.name).unwrap(),
-        *nodes.get(&valve.name).unwrap(),
-      ),
-      0,
-    );
+    // valves_graph_weight.insert(
+    //   (
+    //     *nodes.get(&valve.name).unwrap(),
+    //     *nodes.get(&valve.name).unwrap(),
+    //   ),
+    //   0,
+    // );
     valve.tunnel_valves.iter().for_each(|tunnel_valve_name| {
       valves_graph_weight.insert(
         (
